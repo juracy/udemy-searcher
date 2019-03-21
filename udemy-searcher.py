@@ -16,6 +16,10 @@ def param_fields(fields):
     return {f'fields[{k}]': ','.join(v) for k, v in fields.items()}
 
 
+def match(terms, text):
+    return terms.lower() in text.lower()
+
+
 class Question:
     def __init__(self, parent, id, title):
         self.parent = parent
@@ -40,15 +44,16 @@ class Course:
         url = f'{ENDPOINT}courses/{self.id}/questions/?{query_string(params)}'
         while True:
             response = requests.get(url, headers=self.parent.headers)
-            for question in response.json()['results']:
+            data = response.json()
+            for question in data['results']:
                 q = Question(self, question['id'], question['title'])
                 self.questions.append(q)
                 for answer in question['replies']:
                     q.replies.append(answer['body'])
-            if response.json()['next'] is None:
+            if data['next'] is None:
                 break
 
-            url = response.json()['next']
+            url = data['next']
 
 
 class Udemy:
@@ -80,11 +85,11 @@ class Udemy:
         list = []
         for c in self.courses:
             for q in c.questions:
-                if terms in q.title:
+                if match(terms, q.title):
                     list.append(q)
                 else:
                     for r in q.replies:
-                        if terms in r:
+                        if match(terms, r):
                             list.append(q)
                             break
         return list
