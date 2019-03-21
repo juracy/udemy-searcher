@@ -1,9 +1,19 @@
+#!/bin/sh/env python
+
 import os
 import sys
 
 import requests
 
 ENDPOINT = 'https://www.udemy.com/instructor-api/v1/'
+
+
+def query_string(params):
+    return '&'.join(f'{k}={v}' for k, v in params.items())
+
+
+def param_fields(fields):
+    return {f'fields[{k}]': ','.join(v) for k, v in fields.items()}
 
 
 class Question:
@@ -22,7 +32,12 @@ class Course:
         self.questions = []
 
     def get_questions(self):
-        url = f'{ENDPOINT}courses/{self.id}/questions/?fields[question]=title,num_replies,replies,content&fields[answer]=body&page_size=100'
+        params = param_fields({
+            'question': ['title', 'num_replies', 'replies', 'content'],
+            'answer': ['body'],
+        })
+        params['page_size'] = 100
+        url = f'{ENDPOINT}courses/{self.id}/questions/?{query_string(params)}'
         while True:
             response = requests.get(url, headers=self.parent.headers)
             for question in response.json()['results']:
