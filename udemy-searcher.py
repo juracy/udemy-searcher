@@ -1,9 +1,11 @@
 #!/bin/sh/env python
 
 import os
+import re
 import sys
 
 import requests
+from html2text import html2text
 
 INSTRUCTOR_ENDPOINT = 'https://www.udemy.com/instructor-api/v1/'
 USER_ENDPOINT = 'https://www.udemy.com/api-2.0/users/me/'
@@ -20,6 +22,11 @@ def param_fields(fields):
 
 def match(terms, text):
     return terms.lower() in text.lower()
+
+
+def format(html):
+    text = html2text(html.strip()).strip()
+    return re.sub('\n\n+', '\n\n', text)
 
 
 class Discussion:
@@ -100,9 +107,9 @@ if __name__ == '__main__':
             for result in results:
                 print(f'******* {result.title}')
                 print(f'URL: {UDEMY_QUESTIONS.format(result.course)}{result.id}/')
-                print(result.body)
+                print(format(result.body))
                 print('----')
-                print('\n'.join(result.replies))
+                print('\n'.join(format(x) for x in result.replies))
                 print('**\n')
         else:
             print('There are no matches!')
